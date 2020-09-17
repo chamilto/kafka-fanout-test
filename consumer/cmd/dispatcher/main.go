@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/sirupsen/logrus"
+
+	"kafka-fanout-test/consumer/internal/dispatcher"
 )
 
 const assignor = "range"
@@ -72,7 +72,7 @@ func main() {
 	wg.Add(1)
 
 	consumer := dispatcher.DispatchConsumer{
-		ready: make(chan bool),
+		Ready: make(chan bool),
 	}
 
 	go func() {
@@ -89,11 +89,11 @@ func main() {
 				return
 			}
 
-			consumer.ready = make(chan bool)
+			consumer.Ready = make(chan bool)
 		}
 	}()
 
-	<-consumer.ready
+	<-consumer.Ready
 	logrus.Info("Consumer started")
 
 	// trap sigint
