@@ -3,6 +3,7 @@ import json
 import logging
 import sys
 import random
+import time
 
 from kafka import KafkaProducer
 
@@ -25,6 +26,9 @@ def _get_arg_parser():
         dest="num_messages",
         required=False,
         default=100,
+    )
+    ap.add_argument(
+        "-w", "--wait-time", type=int, help="wait time in ms to wait between each message sent", required=False
     )
     ap.add_argument(
         "-p", "--partition", help="partition to which messages will be published", dest="partition", required=False
@@ -69,13 +73,16 @@ def _send_message(producer, topic, content):
     producer.send(topic, content).add_callback(_on_success).add_errback(_on_error)
 
 
-def _produce_messages(producer, topic, num_messages=None):
+def _produce_messages(producer, topic, num_messages=None, wait_time=0):
     if num_messages is None:
         num_messages = 100
 
     logger.info("sending messages...")
 
     for i in range(num_messages):
+        if wait_time:
+            time.sleep(wait_time / 1000)
+
         _send_message(
             producer,
             topic,
@@ -90,7 +97,7 @@ def _produce_messages(producer, topic, num_messages=None):
 def main():
     args = _get_arg_parser().parse_args()
     producer = _get_producer(args.bootstrap_servers)
-    _produce_messages(producer, args.topic, num_messages=args.num_messages)
+    _produce_messages(producer, args.topic, num_messages=args.num_messages, wait_time=args.wait_time)
 
 
 if __name__ == "__main__":
