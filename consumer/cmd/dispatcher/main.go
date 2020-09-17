@@ -3,16 +3,14 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
-	"time"
 
-	"github.com/Shopify/sarama"
 	"github.com/sirupsen/logrus"
+
+	"kafka-fanout-test/consumer/internal/dispatcher"
 )
 
 const assignor = "range"
@@ -46,55 +44,11 @@ func init() {
 }
 
 func main() {
-	logrus.Info("starting consumer")
-
-	config := sarama.NewConfig()
-
-	if oldest {
-		config.Consumer.Offsets.Initial = sarama.OffsetOldest
-	}
-
-	version, err := sarama.ParseKafkaVersion("2.1.1")
-	if err != nil {
-		logrus.Fatalf("Error parsing Kafka version: %v", err)
-	}
-
-	config.Version = version
+	handler := dispatcher.NewDispatchConsumerHandler()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	consumerGroup, err := sarama.NewConsumerGroup(strings.Split(brokers, ","), group, config)
-
-	if err != nil {
-		logrus.Fatalf("Error creating consumer group: %v", err)
-	}
-
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	consumer := dispatcher.DispatchConsumer{
-		ready: make(chan bool),
-	}
-
-	go func() {
-		defer wg.Done()
-
-		for {
-			err := consumerGroup.Consume(ctx, strings.Split(topics, ","), &consumer)
-
-			if err != nil {
-				logrus.Fatal("Unrecoverable error from consumer: %v", err)
-			}
-
-			if ctx.Err() != nil {
-				return
-			}
-
-			consumer.ready = make(chan bool)
-		}
-	}()
-
-	<-consumer.ready
-	logrus.Info("Consumer started")
+	consumerGroup, err := dispatcher.NewConsumerGroup(ctx, wg, brokers, topics, group, oldest, handler)
 
 	// trap sigint
 	sigterm := make(chan os.Signal, 1)
@@ -111,6 +65,7 @@ func main() {
 	cancel()
 	wg.Wait()
 
+	// Close calls our consumer's Cleanup method
 	if err = consumerGroup.Close(); err != nil {
 		logrus.Fatalf("Error closing client: %v", err)
 	}
