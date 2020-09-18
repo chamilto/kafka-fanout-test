@@ -83,7 +83,3 @@ func (m *messageMapper) MapMessages(kafkaMessage *sarama.ConsumerMessage) error 
 
 	return nil
 }
-
-func ReturnsErr() error {
-	return nil
-}
