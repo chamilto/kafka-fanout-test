@@ -71,9 +71,7 @@ func main() {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
-	consumer := dispatcher.DispatchConsumer{
-		Ready: make(chan bool),
-	}
+	consumer := dispatcher.NewDispatchConsumer()
 
 	go func() {
 		defer wg.Done()

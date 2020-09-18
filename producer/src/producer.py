@@ -4,6 +4,7 @@ import logging
 import sys
 import random
 import time
+from uuid import uuid4
 
 from kafka import KafkaProducer
 
@@ -86,7 +87,11 @@ def _produce_messages(producer, topic, num_messages=None, wait_time=0):
         _send_message(
             producer,
             topic,
-            {"message": "hello, world", "message_num": i, "event_type": random.choice(_EXAMPLE_EVENT_TYPES)},
+            {
+                "content": {"hello": "world", "messageNum": i},
+                "eventType": random.choice(_EXAMPLE_EVENT_TYPES),
+                "eventId": str(uuid4()),
+            },
         )
 
     producer.flush()
