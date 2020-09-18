@@ -47,9 +47,6 @@ func (d *Dispatcher) dispatch(message *mapper.MappedMessage) error {
 }
 
 func (d *Dispatcher) DispatchMessages(messages mapper.MappedMessages) error {
-	d.errors = make(chan error)
-	d.done = make(chan bool)
-	d.wg = sync.WaitGroup{}
 	d.wg.Add(len(messages))
 
 	for _, message := range messages {

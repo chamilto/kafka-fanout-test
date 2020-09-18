@@ -61,6 +61,7 @@ func (m *messageMapper) MapMessages(kafkaMessage *sarama.ConsumerMessage) error 
 		return err
 	}
 
+	// use config to generate a message for each listener
 	if parties, ok := eventTypePartyMapping[msg.EventType]; ok {
 		mappedMessages := MappedMessages{}
 		for _, party := range parties {
@@ -79,7 +80,6 @@ func (m *messageMapper) MapMessages(kafkaMessage *sarama.ConsumerMessage) error 
 	} else {
 		return fmt.Errorf("Unrecognized event type")
 	}
-	// use config to generate a message for each listener
 
 	return nil
 }
